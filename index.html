@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Steganography</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .section {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        input[type="file"], textarea, input[type="password"] {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #hideOutputImage {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        #revealOutput {
+            margin-top: 10px;
+            word-wrap: break-word;
+        }
+        #downloadBtn {
+            display: none;
+            background: #28a745;
+        }
+        #downloadBtn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encrypt Section -->
+        <div class="section">
+            <h2>Hide Message Image Steganography v.0.0.1</h2>
+            <input type="file" id="hideImageInput" accept="image/*">
+            <textarea id="secretMessage" placeholder="Secret Message"></textarea>
+            <input type="password" id="hidePassword" placeholder="Password">
+            <button onclick="hideMessage()">Hide</button>
+            <img id="hideOutputImage" alt="Hidden image will appear here">
+            <button id="downloadBtn" onclick="downloadImage()">Download Image</button>
+        </div>
+
+        <!-- Decrypt Section -->
+        <div class="section">
+            <h2>Reveal Message</h2>
+            <input type="file" id="revealImageInput" accept="image/*">
+            <input type="password" id="revealPassword" placeholder="Password">
+            <button onclick="revealMessage()">Reveal</button>
+            <div id="revealOutput"></div>
+        </div>
+    </div>
+
+    <script>
+    let imageDataUrl = null;
+
+    function hideMessage() {
+        const fileInput = document.getElementById('hideImageInput');
+        const message = document.getElementById('secretMessage').value;
+        const password = document.getElementById('hidePassword').value;
+        
+        if (!fileInput.files[0] || !message || !password) {
+            alert('Please select an image, enter a message, and provide a password');
+            return;
+        }
+
+        const img = new Image();
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Military-grade AES-256 with PBKDF2
+                const salt = CryptoJS.lib.WordArray.random(16); // Random salt
+                const key = CryptoJS.PBKDF2(password, salt, {
+                    keySize: 256/32, // AES-256
+                    iterations: 30000 // High iteration count for security
+                });
+                const iv = CryptoJS.lib.WordArray.random(16); // Random IV
+                const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv }).toString();
+                const dataToHide = salt.toString() + iv.toString() + encrypted; // Combine salt, IV, and ciphertext
+
+                const binaryMessage = textToBinary(dataToHide);
+                let messageIndex = 0;
+                
+                for (let x = 0; x < img.width && messageIndex < binaryMessage.length; x++) {
+                    for (let y = img.height - 1; y < img.height; y++) {
+                        if (messageIndex >= binaryMessage.length) break;
+                        let pixel = ctx.getImageData(x, y, 1, 1);
+                        let data = pixel.data;
+                        data[0] = (data[0] & 0xFE) | parseInt(binaryMessage[messageIndex]);
+                        ctx.putImageData(pixel, x, y);
+                        messageIndex++;
+                    }
+                }
+
+                imageDataUrl = canvas.toDataURL('image/png');
+                document.getElementById('hideOutputImage').src = imageDataUrl;
+                document.getElementById('downloadBtn').style.display = 'block';
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function downloadImage() {
+        if (!imageDataUrl) {
+            alert('No image available to download');
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'encrypted_image.png';
+        link.href = imageDataUrl;
+        document.body.appendChild(link); // Append to body to ensure it works in all browsers
+        link.click();
+        document.body.removeChild(link); // Clean up
+    }
+
+    function revealMessage() {
+        const fileInput = document.getElementById('revealImageInput');
+        const password = document.getElementById('revealPassword').value;
+        
+        if (!fileInput.files[0] || !password) {
+            alert('Please select an image and provide a password');
+            return;
+        }
+
+        const img = new Image();
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                let binaryMessage = '';
+                for (let x = 0; x < img.width; x++) {
+                    let pixel = ctx.getImageData(x, img.height - 1, 1, 1);
+                    binaryMessage += (pixel.data[0] & 1).toString();
+                }
+
+                try {
+                    const extractedData = binaryToText(binaryMessage);
+                    const salt = CryptoJS.enc.Hex.parse(extractedData.slice(0, 32)); // 16 bytes = 32 hex chars
+                    const iv = CryptoJS.enc.Hex.parse(extractedData.slice(32, 64)); // Next 16 bytes
+                    const encrypted = extractedData.slice(64);
+
+                    const key = CryptoJS.PBKDF2(password, salt, {
+                        keySize: 256/32,
+                        iterations: 30000
+                    });
+                    const decrypted = CryptoJS.AES.decrypt(encrypted, key, { iv: iv }).toString(CryptoJS.enc.Utf8);
+                    document.getElementById('revealOutput').textContent = 'Decrypted Message ' + decrypted;
+                } catch (e) {
+                    document.getElementById('revealOutput').textContent = 'Error Wrong password or corrupted image';
+                }
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function textToBinary(text) {
+        return text.split('').map(char => 
+            char.charCodeAt(0).toString(2).padStart(8, '0')
+        ).join('');
+    }
+
+    function binaryToText(binary) {
+        const bytes = binary.match(/.{1,8}/g) || [];
+        return bytes.map(byte => 
+            String.fromCharCode(parseInt(byte, 2))
+        ).join('');
+    }
+    </script>
+</body>
+</html>
