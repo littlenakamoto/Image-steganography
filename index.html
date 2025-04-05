@@ -1,80 +1,249 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Steganography</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            display: flex;
-            gap: 20px;
-        }
-        .section {
-            flex: 1;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #333;
-            margin-top: 0;
-        }
-        input[type="file"], textarea, input[type="password"] {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            min-height: 100vh;
+            padding: 40px 20px;
+            transition: background 0.3s;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .warning {
+            background: #ffebee;
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #c0392b;
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .warning strong {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        input[type="file"], textarea, input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 1rem;
+            color: #2c3e50;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:focus, textarea:focus, input[type="password"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
         button {
-            background: #007bff;
-            color: white;
+            width: 100%;
+            padding: 12px;
+            background: #3498db;
+            color: #fff;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            margin: 5px 0;
+            transition: background 0.3s;
+            margin: 10px 0;
         }
+
         button:hover {
-            background: #0056b3;
+            background: #2980b9;
         }
-        #hideOutputImage {
-            max-width: 100%;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
-        #revealOutput {
-            margin-top: 10px;
-            word-wrap: break-word;
-        }
+
         #downloadBtn {
             display: none;
-            background: #28a745;
+            background: #2ecc71;
         }
+
         #downloadBtn:hover {
-            background: #218838;
+            background: #27ae60;
+        }
+
+        .image-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #hideOutputImage {
+            max-width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .no-image {
+            color: #e74c3c;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        .no-image::before {
+            content: "⚠️ ";
+        }
+
+        #revealOutput {
+            margin-top: 20px;
+            color: #2c3e50;
+            word-wrap: break-word;
+            font-size: 1rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle label {
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .theme-toggle input {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+        }
+
+        body.dark-mode .section {
+            background: #34495e;
+        }
+
+        body.dark-mode .header h1, body.dark-mode h2, body.dark-mode .theme-toggle label {
+            color: #ecf0f1;
+        }
+
+        body.dark-mode input[type="file"], body.dark-mode textarea, body.dark-mode input[type="password"] {
+            background: #2c3e50;
+            border-color: #7f8c8d;
+            color: #ecf0f1;
+        }
+
+        body.dark-mode .no-image {
+            color: #e74c3c;
+        }
+
+        body.dark-mode #revealOutput {
+            color: #ecf0f1;
+        }
+
+        body.dark-mode .warning {
+            background: #4a2c2a;
+            border-color: #e74c3c;
+            color: #e6b8b7;
+        }
+
+        body.dark-mode .warning strong {
+            color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="theme-toggle">
+        <label for="themeSwitch">Dark Mode</label>
+        <input type="checkbox" id="themeSwitch">
+    </div>
+    <div class="header">
+        <h1>Image Steganography v0.0.2</h1>
+    </div>
+    <div class="warning">
+        <strong>WARNING:</strong> This tool is intended <strong>ONLY</strong> for hiding Bitcoin seeds or passwords securely. 
+        Using it for illegal activities is strictly prohibited! If you misuse this tool for illegal purposes, 
+        the CIA, FBI, or other authorities <strong>will find you</strong>, and you could face severe legal consequences, 
+        including jail time. I am <strong>not responsible</strong> for any illegal actions you take with this tool. 
+        Use it responsibly and legally!
+    </div>
     <div class="container">
         <!-- Encrypt Section -->
         <div class="section">
-            <h2>Hide Message Image Steganography v.0.0.1</h2>
+            <h2>Hide Message</h2>
             <input type="file" id="hideImageInput" accept="image/*">
             <textarea id="secretMessage" placeholder="Secret Message"></textarea>
             <input type="password" id="hidePassword" placeholder="Password">
             <button onclick="hideMessage()">Hide</button>
-            <img id="hideOutputImage" alt="Hidden image will appear here">
+            <div class="image-container">
+                <img id="hideOutputImage" alt="Hidden image will appear here">
+                <div id="noImageHide" class="no-image">No image uploaded</div>
+            </div>
             <button id="downloadBtn" onclick="downloadImage()">Download Image</button>
         </div>
 
@@ -89,136 +258,144 @@
     </div>
 
     <script>
-    let imageDataUrl = null;
+        let imageDataUrl = null;
 
-    function hideMessage() {
-        const fileInput = document.getElementById('hideImageInput');
-        const message = document.getElementById('secretMessage').value;
-        const password = document.getElementById('hidePassword').value;
-        
-        if (!fileInput.files[0] || !message || !password) {
-            alert('Please select an image, enter a message, and provide a password');
-            return;
-        }
+        function hideMessage() {
+            const fileInput = document.getElementById('hideImageInput');
+            const message = document.getElementById('secretMessage').value;
+            const password = document.getElementById('hidePassword').value;
 
-        const img = new Image();
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            img.src = e.target.result;
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                // Military-grade AES-256 with PBKDF2
-                const salt = CryptoJS.lib.WordArray.random(16); // Random salt
-                const key = CryptoJS.PBKDF2(password, salt, {
-                    keySize: 256/32, // AES-256
-                    iterations: 30000 // High iteration count for security
-                });
-                const iv = CryptoJS.lib.WordArray.random(16); // Random IV
-                const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv }).toString();
-                const dataToHide = salt.toString() + iv.toString() + encrypted; // Combine salt, IV, and ciphertext
-
-                const binaryMessage = textToBinary(dataToHide);
-                let messageIndex = 0;
-                
-                for (let x = 0; x < img.width && messageIndex < binaryMessage.length; x++) {
-                    for (let y = img.height - 1; y < img.height; y++) {
-                        if (messageIndex >= binaryMessage.length) break;
-                        let pixel = ctx.getImageData(x, y, 1, 1);
-                        let data = pixel.data;
-                        data[0] = (data[0] & 0xFE) | parseInt(binaryMessage[messageIndex]);
-                        ctx.putImageData(pixel, x, y);
-                        messageIndex++;
-                    }
-                }
-
-                imageDataUrl = canvas.toDataURL('image/png');
-                document.getElementById('hideOutputImage').src = imageDataUrl;
-                document.getElementById('downloadBtn').style.display = 'block';
+            if (!fileInput.files[0] || !message || !password) {
+                alert('Please select an image, enter a message, and provide a password');
+                return;
             }
-        }
-        reader.readAsDataURL(file);
-    }
 
-    function downloadImage() {
-        if (!imageDataUrl) {
-            alert('No image available to download');
-            return;
-        }
-        const link = document.createElement('a');
-        link.download = 'encrypted_image.png';
-        link.href = imageDataUrl;
-        document.body.appendChild(link); // Append to body to ensure it works in all browsers
-        link.click();
-        document.body.removeChild(link); // Clean up
-    }
+            const img = new Image();
+            const file = fileInput.files[0];
+            const reader = new FileReader();
 
-    function revealMessage() {
-        const fileInput = document.getElementById('revealImageInput');
-        const password = document.getElementById('revealPassword').value;
-        
-        if (!fileInput.files[0] || !password) {
-            alert('Please select an image and provide a password');
-            return;
-        }
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
 
-        const img = new Image();
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            img.src = e.target.result;
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                let binaryMessage = '';
-                for (let x = 0; x < img.width; x++) {
-                    let pixel = ctx.getImageData(x, img.height - 1, 1, 1);
-                    binaryMessage += (pixel.data[0] & 1).toString();
-                }
-
-                try {
-                    const extractedData = binaryToText(binaryMessage);
-                    const salt = CryptoJS.enc.Hex.parse(extractedData.slice(0, 32)); // 16 bytes = 32 hex chars
-                    const iv = CryptoJS.enc.Hex.parse(extractedData.slice(32, 64)); // Next 16 bytes
-                    const encrypted = extractedData.slice(64);
-
+                    const salt = CryptoJS.lib.WordArray.random(16);
                     const key = CryptoJS.PBKDF2(password, salt, {
                         keySize: 256/32,
                         iterations: 30000
                     });
-                    const decrypted = CryptoJS.AES.decrypt(encrypted, key, { iv: iv }).toString(CryptoJS.enc.Utf8);
-                    document.getElementById('revealOutput').textContent = 'Decrypted Message ' + decrypted;
-                } catch (e) {
-                    document.getElementById('revealOutput').textContent = 'Error Wrong password or corrupted image';
+                    const iv = CryptoJS.lib.WordArray.random(16);
+                    const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv }).toString();
+                    const dataToHide = salt.toString() + iv.toString() + encrypted;
+
+                    const binaryMessage = textToBinary(dataToHide);
+                    let messageIndex = 0;
+
+                    for (let x = 0; x < img.width && messageIndex < binaryMessage.length; x++) {
+                        for (let y = img.height - 1; y < img.height; y++) {
+                            if (messageIndex >= binaryMessage.length) break;
+                            let pixel = ctx.getImageData(x, y, 1, 1);
+                            let data = pixel.data;
+                            data[0] = (data[0] & 0xFE) | parseInt(binaryMessage[messageIndex]);
+                            ctx.putImageData(pixel, x, y);
+                            messageIndex++;
+                        }
+                    }
+
+                    imageDataUrl = canvas.toDataURL('image/png');
+                    const outputImage = document.getElementById('hideOutputImage');
+                    outputImage.src = imageDataUrl;
+                    outputImage.style.display = "block";
+                    document.getElementById('noImageHide').style.display = 'none';
+                    document.getElementById('downloadBtn').style.display = 'block';
                 }
             }
+            reader.readAsDataURL(file);
         }
-        reader.readAsDataURL(file);
-    }
 
-    function textToBinary(text) {
-        return text.split('').map(char => 
-            char.charCodeAt(0).toString(2).padStart(8, '0')
-        ).join('');
-    }
+        function downloadImage() {
+            if (!imageDataUrl) {
+                alert('No image available to download');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'encrypted_image.png';
+            link.href = imageDataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
-    function binaryToText(binary) {
-        const bytes = binary.match(/.{1,8}/g) || [];
-        return bytes.map(byte => 
-            String.fromCharCode(parseInt(byte, 2))
-        ).join('');
-    }
+        function revealMessage() {
+            const fileInput = document.getElementById('revealImageInput');
+            const password = document.getElementById('revealPassword').value;
+
+            if (!fileInput.files[0] || !password) {
+                alert('Please select an image and provide a password');
+                return;
+            }
+
+            const img = new Image();
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    let binaryMessage = '';
+                    for (let x = 0; x < img.width; x++) {
+                        let pixel = ctx.getImageData(x, img.height - 1, 1, 1);
+                        binaryMessage += (pixel.data[0] & 1).toString();
+                    }
+
+                    try {
+                        const extractedData = binaryToText(binaryMessage);
+                        const salt = CryptoJS.enc.Hex.parse(extractedData.slice(0, 32));
+                        const iv = CryptoJS.enc.Hex.parse(extractedData.slice(32, 64));
+                        const encrypted = extractedData.slice(64);
+
+                        const key = CryptoJS.PBKDF2(password, salt, {
+                            keySize: 256/32,
+                            iterations: 30000
+                        });
+                        const decrypted = CryptoJS.AES.decrypt(encrypted, key, { iv: iv }).toString(CryptoJS.enc.Utf8);
+                        document.getElementById('revealOutput').textContent = 'Decrypted Message ' + decrypted;
+                    } catch (e) {
+                        document.getElementById('revealOutput').textContent = 'Error Wrong password or corrupted image';
+                    }
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function textToBinary(text) {
+            return text.split('').map(char => 
+                char.charCodeAt(0).toString(2).padStart(8, '0')
+            ).join('');
+        }
+
+        function binaryToText(binary) {
+            const bytes = binary.match(/.{1,8}/g) || [];
+            return bytes.map(byte => 
+                String.fromCharCode(parseInt(byte, 2))
+            ).join('');
+        }
+
+        // Theme switcher
+        const themeSwitch = document.getElementById('themeSwitch');
+        themeSwitch.addEventListener('change', function() {
+            document.body.classList.toggle('dark-mode', this.checked);
+        });
     </script>
 </body>
 </html>
