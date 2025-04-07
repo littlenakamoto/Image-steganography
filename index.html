@@ -278,10 +278,7 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
 
                     // Military-grade AES-256 with PBKDF2
                     const salt = CryptoJS.lib.WordArray.random(16);
@@ -300,17 +297,25 @@
                     const binaryMessage = textToBinary(dataToHide);
                     const requiredPixels = binaryMessage.length;
 
-                    if (img.width < requiredPixels) {
-                        alert(`Image too small! Required width: ${requiredPixels} pixels, but image is only ${img.width} pixels wide.`);
-                        return;
-                    }
+                    // Calculate proportional dimensions
+                    const aspectRatio = img.width / img.height;
+                    const newWidth = Math.max(img.width, requiredPixels);
+                    const newHeight = Math.ceil(newWidth / aspectRatio);
 
+                    // Set canvas dimensions
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+
+                    // Draw the image scaled proportionally
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Embed the binary message in the last row
                     let messageIndex = 0;
-                    for (let x = 0; x < img.width && messageIndex < binaryMessage.length; x++) {
-                        let pixel = ctx.getImageData(x, img.height - 1, 1, 1);
+                    for (let x = 0; x < canvas.width && messageIndex < binaryMessage.length; x++) {
+                        let pixel = ctx.getImageData(x, canvas.height - 1, 1, 1);
                         let data = pixel.data;
                         data[0] = (data[0] & 0xFE) | parseInt(binaryMessage[messageIndex]);
-                        ctx.putImageData(pixel, x, img.height - 1);
+                        ctx.putImageData(pixel, x, canvas.height - 1);
                         messageIndex++;
                     }
 
@@ -320,8 +325,8 @@
                     outputImage.style.display = 'block';
                     document.getElementById('noImageHide').style.display = 'none';
                     document.getElementById('downloadBtn').style.display = 'block';
-                }
-            }
+                };
+            };
             reader.readAsDataURL(file);
         }
 
@@ -397,8 +402,8 @@
                     } catch (e) {
                         document.getElementById('revealOutput').textContent = `Error: ${e.message}`;
                     }
-                }
-            }
+                };
+            };
             reader.readAsDataURL(file);
         }
 
